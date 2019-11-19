@@ -1,10 +1,10 @@
 from django.shortcuts import render, get_object_or_404
-from .serializers import TodoSerializer
+from .serializers import TodoSerializer, UserSerializer
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from django.http import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from .models import Todo
+from .models import Todo, User
 
 # Create your views here.
 @api_view(['POST'])
@@ -35,3 +35,16 @@ def todo_detail(request, id):
         # return JsonResponse({"msg": "삭제되었습니다."})
         return HttpResponse(status=204)
     return HttpResponse(status=400)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+@authentication_classes((JSONWebTokenAuthentication,))
+def user_detail(request, id):
+    user = get_object_or_404(User, id=id)
+
+    if request.user != user:
+        return HttpResponse(status=403)
+
+    if request.method == "GET":
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data)
